@@ -10,7 +10,12 @@
 
 (defn timeNow [] (c/to-long  (t/now)))
 
-(def  connection (cc/connect ["dockerhost"] {:port 44003 :keyspace "esports_keyspace"}))
+(defn db-host  []
+  (or (System/getenv "CASSANDRA_PORT_9042_TCP_ADDR") "dockerhost"))
+
+(defn db-port [] (read-string (or (System/getenv "CASSANDRA_PORT_9042_TCP_PORT") "44003")))
+
+(def  connection (cc/connect [(db-host)] {:port (db-port) :keyspace "esports_keyspace"}))
 
 (defn endGame [id server winner loser]
       (cql/update connection "games"
