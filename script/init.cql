@@ -26,7 +26,7 @@ CREATE TABLE rounds (
   t text,
   ct_points int,
   t_points int,
-  PRIMARY KEY (server,started,id)
+  PRIMARY KEY (game,started,id,server)
 );
 
 CREATE TABLE round_players (

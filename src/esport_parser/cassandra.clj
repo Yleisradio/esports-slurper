@@ -25,18 +25,18 @@
 
 (defn endRound [id server t ct t_points ct_points winner loser]
       (cql/update connection "rounds"
-          {:ended (c/to-long (t/now)) :state "ended" :winner winner :loser loser :ct ct :t t :ct_points ct_points :t_points t_points}
+          {:ended (timeNow) :state "ended" :winner winner :loser loser :ct ct :t t :ct_points ct_points :t_points t_points}
           (where [[= :id id][= :server server]])))
 
 (defn getLastGame [server]
   (first (cql/select connection "games"
-                     (where [[= :server server]])
+                     (where [[= :server server] ])
                      (order-by [:started :desc])
                      (limit 1))))
 
-(defn getLastRound [server]
+(defn getLastRound [server gameid]
   (first (cql/select connection "rounds"
-                     (where [[= :server server]])
+                     (where [[= :game gameid]])
                      (order-by [:started :desc])
                      (limit 1))))
 
@@ -51,10 +51,18 @@
 
 
 (defn updateGame [game]
-  (cql/update connection "games" (dissoc game :id :server :started) (where [[= :id (get game :id)]])))
+  (let [game2upd (dissoc game :id :server :started)]
+    (cql/update connection "games"  game2upd  (where  [[= :id  (get game :id)]]))
+    )
+  )
 
 (defn updateRound [round]
-  (cql/update connection "rounds" (dissoc round :id :server :started ) (where [[= :id (get round :id)]]))
+  (log/info "Update round " round)
+  (log/info (dissoc round :id :server :started :game ))
+  (log/info (type (dissoc round :id :server :started :game )))
+  (let [round_update (dissoc round :id :server :started :game )]
+        (cql/update connection "rounds"  (dissoc round :id :server :started :game )  (where  [[= :id  (get round :id)]]))
+         )
   )
 
 (defn getAllGames []

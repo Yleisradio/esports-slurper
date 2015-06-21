@@ -9,20 +9,34 @@
 
 (def ongoing-games (ref {}))
 
-(def ongoing-rounds (ref {}))
+(def ongoing-rounds  (ref  {}))
 
-(defn updateState [state key value]
-   (dosync
+(defn updateState  [state key value]
+  (dosync
     (alter state assoc key value)))
 
+(defn getLastAndSafe [server] (updateState ongoing-games server  (getLastGame server)))
+
+(defn getLastRoundAndSafe [server gameid] (updateState ongoing-rounds server  (getLastRound server gameid)) )
+
+(defn getGame [server] 
+  (or (when (not-empty @ongoing-games) (get @ongoing-games server)) ((getLastAndSafe server) ((get @ongoing-games server))))
+  )
+
+(defn getRound [server game]
+  (or  (when  (not-empty @ongoing-rounds)  (get @ongoing-rounds server))  ((getLastRoundAndSafe server game)  ((get @ongoing-rounds server))))
+  )
+
 (defn round_or_game_ended [server line]
-  (let [game (get @ongoing-games server)
-        round (get @ongoing-rounds server)]
-    (updateRound (merge game {:ended timeNow :state "ended" :winner "T" :loser "CT"
-                              :ct "" :t "" :ct_points 10 :t_points 1
-                              }))
-    (updateState ongoing-rounds server nil)
-  (log/info "Round/Game ended " game " Round:" round)))
+  (try 
+  (log/info "Round or game ended. " line)
+  (let [game (getGame server)
+        round (getRound server (get game :id))]
+    (if round  
+      ((updateRound (merge game {:ended timeNow :state "ended" :winner "T" :loser "CT" :ct "123" :t "w234" :ct_points 10 :t_points 1}))
+       (updateState ongoing-rounds server nil)))
+    (log/info "Round/Game ended " game " Round:" round)) 
+  (catch Exception e (log/error e (.getMessage e)))))
 
 (defn game_started [server line]
   (log/info "################ Game started " line)
@@ -33,19 +47,18 @@
 
 (defn round_started [server line]
   (log/info "---------- Round start: " line)
-  (log/info @ongoing-games)
-  (let [game (get @ongoing-games server)
+  (let [game (getGame server)
         round {:game  (get game :id) :state "started" :started (c/to-long (t/now))}]
     (if-not (nil? game)
       (do
         (log/info "Round started Ongoing:" game)
         (addNewRound server round)
-        (updateState ongoing-rounds server (getLastRound server))))))
+        (updateState ongoing-rounds server (getLastRound server (get game :id)))))))
 
 
 (defn player_killed [server line tokens]
-  (let [game (get @ongoing-games server)
-        round (get @ongoing-rounds server)]
+  (let [game (getGame server)
+        round (getRound server (get game :id))]
       (log/info "player killed round " round))
   (log/info "player killed " (get tokens 8)))
 
@@ -79,14 +92,14 @@
       ;; player kills (token 7 'kills') (\d{2}:\d{2}:\d{2}:) "(.*)<(.*)><(.*)><(.*)>" (.*) (.*) "(.*)<(.*)><(.*)><(.*)>" (.*) (\w*) "(.*)"\s?(\(*.*\)*)
       ;;  12:05:50: "b* DogC)<28><STEAM_1:1:29151561><CT>" [-433 -84 -109] killed "Haalis<29><STEAM_1:0:40671441><TERRORIST>" [1008 261 -94] with "m4a1_silencer"
       ;;  12:05:40: "Boom-say<20><STEAM_1:1:37250067><TERRORIST>" [1001 313 -158] killed "b* DogC)<28><STEAM_1:1:29151561><CT>" [203 266 -95] with "ak47" (headshot)
-      (if (.contains line " killed ")
-        (log/info ":" line ":")
-        (let [tokens (re-find kills-expn line)
-            method (get tokens 7)]
-        (if (= "killed" method) (player_killed line tokens))))
+      ;;(if (.contains line " killed ")
+      ;;  (log/info ":" line ":")
+      ;;  (let [tokens (re-find kills-expn line)
+      ;;      method (get tokens 7)]
+      ;;  (if (= "killed" method) (player_killed line tokens))))
 
       ;; puchase
       )
-  (catch Exception e (log/fatal (.getMessage e))))
+  (catch Exception e (log/error e (.getMessage e))))
 
 )
