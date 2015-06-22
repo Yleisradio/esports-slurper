@@ -19,10 +19,11 @@
      :tags [{:name "hello", :description "says hello in Finnish"}]})
   (context* "/api" []
             :tags ["Games"]
-            (GET* "/list" []
-                  :summary "say hello"
+            (GET* "/listgames" []
+                  :summary "List games"
                   (ok (getAllGames)))
-            (GET* "/listrounds" []
+            (GET* "/listrounds/:gameid" []
                  :summary "List rounds"
-                 (ok (getAllRounds)))
+                  :path-params  [gameid :- String]
+                 (ok (getAllRounds gameid)))
             ))

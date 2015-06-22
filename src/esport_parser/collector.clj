@@ -12,14 +12,21 @@
 (def ongoing-rounds  (ref  {}))
 
 (defn updateState  [state key value]
+  (if value
+    (dosync
+      (alter state assoc key  value ))))
+
+(defn clearState [state key]
   (dosync
-    (alter state assoc key value)))
+    (alter state dissoc key )
+    )
+  )
 
 (defn getLastAndSafe [server] (updateState ongoing-games server  (getLastGame server)))
 
 (defn getLastRoundAndSafe [server gameid] (updateState ongoing-rounds server  (getLastRound server gameid)) )
 
-(defn getGame [server] 
+(defn getGame [server]
   (or (when (not-empty @ongoing-games) (get @ongoing-games server)) ((getLastAndSafe server) ((get @ongoing-games server))))
   )
 
@@ -27,16 +34,48 @@
   (or  (when  (not-empty @ongoing-rounds)  (get @ongoing-rounds server))  ((getLastRoundAndSafe server game)  ((get @ongoing-rounds server))))
   )
 
+(defn matchRoundend [line]
+  (re-find #"^(.*) \"(.*)\".*\"(.*)\" \W{1}(\w{1,2}) \"(\w{1,2})\".*\W{1}(\w{1,2}) \"(\w{1,2})\"" line)
+  )
+
+(defn teamShort [team]
+  (case (.toUpperCase team)
+    "TERRORIST" "t"
+    "CT" "ct"
+    )
+  )
+
+(defn getLoserTeam [winner]
+  (case (.toLowerCase winner)
+    "t" "ct"
+    "ct" "t"
+    )
+  )
+
 (defn round_or_game_ended [server line]
-  (try 
-  (log/info "Round or game ended. " line)
-  (let [game (getGame server)
-        round (getRound server (get game :id))]
-    (if round  
-      ((updateRound (merge game {:ended timeNow :state "ended" :winner "T" :loser "CT" :ct "123" :t "w234" :ct_points 10 :t_points 1}))
-       (updateState ongoing-rounds server nil)))
-    (log/info "Round/Game ended " game " Round:" round)) 
-  (catch Exception e (log/error e (.getMessage e)))))
+  (try
+    (log/info "Round or game ended. " line)
+    (let [game (getGame server)
+          round (getRound server (get game :id))
+          ]
+      (if round
+        (do 
+          (let [matches  (matchRoundend line)
+                winner (teamShort  (get matches 2))
+                points {(.toLowerCase (get matches 4)) (get matches 5) (.toLowerCase (get matches 6)) (get matches 7)}
+                ]
+            (log/info "Points " points " Winner:" winner)
+
+            (updateRound (merge round {:ended (timeNow) :state "ended" 
+                                       :winner winner 
+                                       :loser (getLoserTeam winner) 
+                                       :ct "123" :t "w234" 
+                                       :ct_points (read-string (get points "ct")) 
+                                       :t_points (read-string (get points "t")) }))
+            (clearState ongoing-rounds server)))
+        (log/info "Round/Game ended " game " Round:" round))
+      )
+    (catch Exception e (log/error e (.getMessage e)))))
 
 (defn game_started [server line]
   (log/info "################ Game started " line)

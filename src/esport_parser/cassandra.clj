@@ -52,16 +52,22 @@
 
 (defn updateGame [game]
   (let [game2upd (dissoc game :id :server :started)]
-    (cql/update connection "games"  game2upd  (where  [[= :id  (get game :id)]]))
+    (log/info "Game to update: " game2upd)
+    (cql/update connection "games"  game2upd  (where  [[= :id  (get game :id)]
+                                                       [= :server (get game :server)]
+                                                       [= :started (get game :started)]
+                                                       ]))
     )
   )
 
 (defn updateRound [round]
   (log/info "Update round " round)
-  (log/info (dissoc round :id :server :started :game ))
-  (log/info (type (dissoc round :id :server :started :game )))
   (let [round_update (dissoc round :id :server :started :game )]
-        (cql/update connection "rounds"  (dissoc round :id :server :started :game )  (where  [[= :id  (get round :id)]]))
+        (cql/update connection "rounds"  (dissoc round :id :server :started :game )  (where  [[= :id  (get round :id)]
+                                                                                              [= :game (get round :game)]
+                                                                                              [= :started (get round :started)]
+                                                                                              [= :server (get round :server)]
+                                                                                              ]))
          )
   )
 
@@ -69,8 +75,10 @@
   ;;  (order-by [:started :desc])
   (cql/select connection "games"))
 
-(defn getAllRounds []
-  (cql/select connection "rounds")
+(defn getAllRounds [gameid]
+  (if gameid 
+    (cql/select connection "rounds" (where [[= :game (java.util.UUID/fromString gameid)]])) 
+    (cql/select connection "rounds"))
   )
 
 (defn insertEvent [server line]
