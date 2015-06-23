@@ -5,6 +5,7 @@ USE esports_keyspace;
 CREATE TABLE games (
   id uuid,
   state text,
+  rounds int,
   started timestamp,
   ended timestamp,
   server text,
@@ -16,6 +17,7 @@ CREATE TABLE games (
 CREATE TABLE rounds (
   id uuid,
   game uuid,
+  round int,
   state text,
   started timestamp,
   ended timestamp,

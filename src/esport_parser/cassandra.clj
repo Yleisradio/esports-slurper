@@ -22,6 +22,7 @@
           {:ended (c/to-long (t/now)) :state "ended" :winner winner :loser loser}
           (where [[= :id id][= :server server]])))
 
+(defn filterStarted [data] (= (get data :state) "started"))
 
 (defn endRound [id server t ct t_points ct_points winner loser]
       (cql/update connection "rounds"
@@ -29,16 +30,16 @@
           (where [[= :id id][= :server server]])))
 
 (defn getLastGame [server]
-  (first (cql/select connection "games"
-                     (where [[= :server server] ])
-                     (order-by [:started :desc])
-                     (limit 1))))
+  (first (filter filterStarted (cql/select connection "games"
+                                           (where [[= :server server] ])
+                                           (order-by [:started :desc])
+                                           (limit 1)))))
 
 (defn getLastRound [server gameid]
-  (first (cql/select connection "rounds"
-                     (where [[= :game gameid]])
-                     (order-by [:started :desc])
-                     (limit 1))))
+  (first (filter filterStarted (cql/select connection "rounds"
+                                           (where [[= :game gameid]])
+                                           (order-by [:started :desc])
+                                           (limit 1)))))
 
 
 (defn addNewGame [server game]

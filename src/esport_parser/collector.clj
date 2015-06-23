@@ -27,7 +27,12 @@
 (defn getLastRoundAndSafe [server gameid] (updateState ongoing-rounds server  (getLastRound server gameid)) )
 
 (defn getGame [server]
-  (or (when (not-empty @ongoing-games) (get @ongoing-games server)) ((getLastAndSafe server) ((get @ongoing-games server))))
+  (or 
+    (when (contains? @ongoing-games :server) (get @ongoing-games server)) 
+    (do 
+      (getLastAndSafe server) 
+      (get @ongoing-games server nil))
+    )
   )
 
 (defn getRound [server game]
@@ -45,7 +50,7 @@
     )
   )
 
-(defn getLoserTeam [winner]
+(defn getLoserSide [winner]
   (case (.toLowerCase winner)
     "t" "ct"
     "ct" "t"
@@ -68,11 +73,24 @@
 
             (updateRound (merge round {:ended (timeNow) :state "ended" 
                                        :winner winner 
-                                       :loser (getLoserTeam winner) 
+                                       :loser (getLoserSide winner) 
                                        :ct "123" :t "w234" 
                                        :ct_points (read-string (get points "ct")) 
                                        :t_points (read-string (get points "t")) }))
-            (clearState ongoing-rounds server)))
+            (clearState ongoing-rounds server)
+            (if (or (= 16 (read-string (get points "ct" "0"))) (= 16 (read-string  (get points "t" "0")))) 
+              (do 
+                ;; End game, set winner. Not handling specialcases yet.
+                (log/info "Ending game: " points)
+                (updateGame (merge game {:ended  (timeNow) :state "ended"
+                                         :loser (getLoserSide winner)
+                                         :winner winner
+                                         }))
+                (clearState ongoing-games server)
+                )
+              ) 
+            ))
+
         (log/info "Round/Game ended " game " Round:" round))
       )
     (catch Exception e (log/error e (.getMessage e)))))
