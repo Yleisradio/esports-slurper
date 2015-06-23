@@ -1,11 +1,11 @@
 (ns esport-parser.collector
   (:require [clojure.tools.logging :as log]
             [clj-time.core :as t]
-            [clj-time.coerce :as c])
+            [clj-time.coerce :as c]
+            [esport-parser.players :as players])
   (:use esport-parser.schema)
   (:use esport-parser.cassandra)
   (:import [java.util Date]))
-
 
 (def ongoing-games (ref {}))
 
@@ -127,6 +127,8 @@
       (if (.contains line "World triggered \"Round_Start\"") (round_started server line))
       ;;
       (if (.contains line "SFUI_Notice") (round_or_game_ended server line))
+
+      (if (.contains line "switched from team") (players/update-teams line))
 
       ;; player kills (token 7 'kills') (\d{2}:\d{2}:\d{2}:) "(.*)<(.*)><(.*)><(.*)>" (.*) (.*) "(.*)<(.*)><(.*)><(.*)>" (.*) (\w*) "(.*)"\s?(\(*.*\)*)
       ;;  12:05:50: "b* DogC)<28><STEAM_1:1:29151561><CT>" [-433 -84 -109] killed "Haalis<29><STEAM_1:0:40671441><TERRORIST>" [1008 261 -94] with "m4a1_silencer"
