@@ -58,13 +58,17 @@ CREATE TABLE players (
     name text,
     id text,
     team text,
+    steamid text,
     PRIMARY KEY (name,team)
 );
 
 CREATE TABLE teams (
-    name text PRIMARY KEY,
-    id int,
-    side text
+    name text,
+    label text,
+    side text,
+    game uudi,
+    points int,
+    PRIMARY KEY (name,game)
 );
 
 CREATE TABLE events (

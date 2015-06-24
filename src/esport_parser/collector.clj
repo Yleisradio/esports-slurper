@@ -4,6 +4,8 @@
             [clj-time.coerce :as c])
   (:use esport-parser.schema)
   (:use esport-parser.cassandra)
+  (:use esport-parser.team)
+  (:use esport-parser.utils)
   (:import [java.util Date]))
 
 
@@ -11,16 +13,6 @@
 
 (def ongoing-rounds  (ref  {}))
 
-(defn updateState  [state key value]
-  (if value
-    (dosync
-      (alter state assoc key  value ))))
-
-(defn clearState [state key]
-  (dosync
-    (alter state dissoc key )
-    )
-  )
 
 (defn getLastAndSafe [server] (updateState ongoing-games server  (getLastGame server)))
 
@@ -87,6 +79,7 @@
                                          :winner winner
                                          }))
                 (clearState ongoing-games server)
+                (end_game server game)
                 )
               ) 
             ))
@@ -98,8 +91,11 @@
 (defn game_started [server line]
   (log/info "################ Game started " line)
   (let [game {:server server :started (c/to-long (t/now)) :state "started"}]
-    (addNewGame server game))
-  (updateState ongoing-games server (getLastGame server)))
+    (do 
+      (addNewGame server game) 
+      (updateState ongoing-games server (getLastGame server))
+      (start_game server game)
+    )))
 
 
 (defn round_started [server line]
@@ -145,6 +141,13 @@
       (if (.contains line "World triggered \"Round_Start\"") (round_started server line))
       ;;
       (if (.contains line "SFUI_Notice") (round_or_game_ended server line))
+
+      ;; get current teams
+      ;; 01/20/2015 - 14:32:00: rcon from "94.23.30.133:48357": command
+      ;; "mp_teamname_2 "test22""
+      (if (.contains line "mp_teamname_") (add_team server line))
+
+      
 
       ;; player kills (token 7 'kills') (\d{2}:\d{2}:\d{2}:) "(.*)<(.*)><(.*)><(.*)>" (.*) (.*) "(.*)<(.*)><(.*)><(.*)>" (.*) (\w*) "(.*)"\s?(\(*.*\)*)
       ;;  12:05:50: "b* DogC)<28><STEAM_1:1:29151561><CT>" [-433 -84 -109] killed "Haalis<29><STEAM_1:0:40671441><TERRORIST>" [1008 261 -94] with "m4a1_silencer"

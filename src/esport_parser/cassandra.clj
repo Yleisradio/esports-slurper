@@ -50,6 +50,10 @@
   (log/info "Add new Round:" round)
   (cql/insert connection "rounds" (merge round {:id (uuids/random) :server server} )))
 
+(defn addNewTeam [server team] 
+  (log/info "Add new Team :" team)
+  (cql/insert connection "teams" (merge team {:id (uuids/random) :server server}))
+  )
 
 (defn updateGame [game]
   (let [game2upd (dissoc game :id :server :started)]
@@ -63,14 +67,22 @@
 
 (defn updateRound [round]
   (log/info "Update round " round)
-  (let [round_update (dissoc round :id :server :started :game )]
-        (cql/update connection "rounds"  (dissoc round :id :server :started :game )  (where  [[= :id  (get round :id)]
-                                                                                              [= :game (get round :game)]
-                                                                                              [= :started (get round :started)]
-                                                                                              [= :server (get round :server)]
-                                                                                              ]))
-         )
+  (let [round2upd (dissoc round :id :server :started :game )]
+    (cql/update connection "rounds"  round2upd  (where  [[= :id  (get round :id)]
+                                                         [= :game (get round :game)]
+                                                         [= :started (get round :started)]
+                                                         [= :server (get round :server)]
+                                                         ]))
+    )
   )
+
+(defn updateTeam [team]
+  (log/info "Update team" team)
+  (let [team2upd (dissoc team :name :game)]
+    (cql/update connection "teams" team2upd (where [[= :name (get team :name)]
+                                                    [= :game (get team :id)]] 
+                                                   )
+                )))
 
 (defn getAllGames []
   ;;  (order-by [:started :desc])
@@ -84,3 +96,6 @@
 
 (defn insertEvent [server line]
   (cql/insert connection "events" {:id  (uuids/random) :server server :line line :eventtime (c/to-long (t/now))}))
+
+
+
