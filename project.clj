@@ -6,7 +6,9 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [org.slf4j/slf4j-api "1.7.10"]
                  [ch.qos.logback/logback-classic "1.1.3"]
-                 [clojurewerkz/cassaforte "2.0.1"]]
+                 [clojurewerkz/cassaforte "2.0.1"]
+                 [clojurewerkz/meltdown "1.1.0"]
+                 ]
   :ring {:handler esport-parser.handler/app
          :init esport-parser.handler/init
          :destroy esport-parser.handler/destroy}

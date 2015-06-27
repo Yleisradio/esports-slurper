@@ -97,5 +97,21 @@
 (defn insertEvent [server line]
   (cql/insert connection "events" {:id  (uuids/random) :server server :line line :eventtime (c/to-long (t/now))}))
 
+(defn getTeam [team server game]
+  (cql/select connection "teams" (where [[= :name name][= :game (get game :id)]])
+  ))
 
+(defn upsertTeam [server team game]
+  (let [orgGame (getTeam team server game)]
+    (log/info "Upsert team " team " found " orgGame)
+    (if orgGame 
+      (updateTeam team)
+      (addNewTeam team)
+      )
+    )   
+  )
 
+(defn getAllTeams [gameid]
+  (if gameid 
+    (cql/select connection "teams" (where  [[= :game  (java.util.UUID/fromString gameid)]]))
+    (cql/select connection "teams")))

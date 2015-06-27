@@ -5,9 +5,13 @@
             [clojure.tools.logging :as log]
             [esport-parser.server :as server])
   (:use esport-parser.schema)
-  (:use esport-parser.cassandra))
+  (:use esport-parser.cassandra) 
+  (:use esport-parser.collector))
 
-(defn init [] (server/start 8081))
+(defn init []  (do 
+                 (collector_init)
+                 (server/start 8081)
+                 ))
 
 (defn destroy [] (server/stop))
 
@@ -26,4 +30,8 @@
                  :summary "List rounds"
                   :path-params  [gameid :- String]
                  (ok (getAllRounds gameid)))
+            (GET* "/listteams/:gameid" []
+                 :summary "List rounds"
+                  :path-params  [gameid :- String]
+                 (ok (getAllTeams gameid)))
             ))

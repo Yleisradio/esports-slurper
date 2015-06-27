@@ -66,9 +66,9 @@ CREATE TABLE teams (
     name text,
     label text,
     side text,
-    game uudi,
+    game uuid,
     points int,
-    PRIMARY KEY (name,game)
+    PRIMARY KEY (game,name)
 );
 
 CREATE TABLE events (
