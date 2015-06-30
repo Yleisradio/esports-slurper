@@ -22,6 +22,7 @@ mkdir /home/install
 # echo 'extension=pthreads.so' >> /etc/php.ini
 
 mkdir /home/ebot
+
 cd /home/ebot
 wget https://github.com/deStrO/eBot-CSGO/archive/threads.zip
 unzip threads.zip
@@ -41,6 +42,8 @@ wget https://github.com/deStrO/eBot-CSGO-Web/archive/master.zip
 unzip master.zip
 mv eBot-CSGO-Web-master ebot-web
 cd ebot-web
+mkdir /home/ebot/ebot-web/cache
+
 cp config/app_user.yml.default config/app_user.yml
 
 # edit config config/app_user.yml with ebot_ip and ebot_port

@@ -7,9 +7,9 @@ main () {
     docker run -d --name esports-ebot --link esports-mysql:mysql -p 81:80 esports-ebot
 
     sleep 15
-    docker exec -it esports-ebot bash /usr/bin/php5 symfony cc
-    docker exec -it esports-ebot bash /usr/bin/php5 symfony doctrine:build --all --no-confirmation
-    docker exec -it esports-ebot bash /usr/bin/php5 symfony guard:create-user --is-super-admin admin@ebot admin admin
+    docker exec -it esports-ebot bash php /home/ebot/ebot-web/symfony cc
+    docker exec -it esports-ebot bash php /home/ebot/ebot-web/symfony doctrine:build --all --no-confirmation
+    docker exec -it esports-ebot bash php /home/ebot/ebot-web/symfony guard:create-user --is-super-admin admin@ebot admin admin
 
 
 }
