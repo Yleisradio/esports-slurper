@@ -27,7 +27,8 @@ wget https://github.com/deStrO/eBot-CSGO/archive/threads.zip
 unzip threads.zip
 mv eBot-CSGO-threads ebot-csgo
 
-cd ebot-csgo
+cd /home/ebot/ebot-csgo
+
 curl -sS https://getcomposer.org/installer | php
 mv composer.phar /usr/local/bin/composer
 composer install
