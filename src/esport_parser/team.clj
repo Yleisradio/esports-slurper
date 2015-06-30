@@ -52,16 +52,16 @@
 (defn start_game [server game]
   (log/info "Teams:" @ongoing-teams " " server " " game)
   (log/info (get @ongoing-teams server))
-  (for [team (get @ongoing-teams server)]
+  (doseq [[id team] (get @ongoing-teams server)]
     (do  
-      (log/info "Team to upsert" team)
-      (upsertTeam server (assoc team :game (get game :id)) game) 
-      (updateOngoingTeam server (assoc team :game  (get game :id)))
+      (log/info "Team to upsert" team )
+      (upsertTeam server (assoc team :game (get game :id)) game)
+      (updateOngoingTeam server (assoc team :game (get game :id)))
       ))
   )
 
 ;; end game and clean teams.
-(defn end_game [server game]
+(defn team_end_game [server game]
   (log/info "Teams end game")
   (clearState ongoing-teams server)
   )

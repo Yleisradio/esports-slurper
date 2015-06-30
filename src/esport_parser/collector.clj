@@ -19,20 +19,36 @@
   (re-find #"^(.*) \"(.*)\".*\"(.*)\" \W{1}(\w{1,2}) \"(\w{1,2})\".*\W{1}(\w{1,2}) \"(\w{1,2})\"" line)
   )
 
-(defn handleGameEnd [server game points winner ]
-            (if (or (= 16 (read-string (get points "ct" "0"))) (= 16 (read-string  (get points "t" "0")))) 
-              (do 
-                ;; End game, set winner. Not handling specialcases yet.
-                (log/info "Ending game: " points)
-                (updateGame (merge game {:ended  (timeNow) :state "ended"
-                                         :loser (getLoserSide winner)
-                                         :winner winner
-                                         }))
-                (clearState ongoing-games server)
-                (end_game server game)
-                )
-              ) 
+
+(defn gameEnd [server game points winner]
+  (do 
+    ;; End game, set winner. Not handling specialcases yet.
+    (log/info "Ending game: " points)
+    (updateGame (merge game {:ended  (timeNow) :state "ended"
+                             :loser (getLoserSide winner)
+                             :winner winner
+                             }))
+    (clearState ongoing-games server)
+    (team_end_game server game)
+    )
   )
+
+(defn handleGameEnd [server game points winner ]
+  (if (or (= 16 (read-string (get points "ct" "0"))) (= 16 (read-string  (get points "t" "0")))) 
+    (gameEnd server game points winner)
+    ) 
+  )
+
+(defn roundSpawn [event]
+  (let [server (getEventItem event :server)
+        line (getEventItem event :line) 
+        game (getGame server)
+        ]
+    (if game 
+      (gameEnd server game {} nil)
+      )
+    ))
+
 
 (defn round_or_game_ended [event]
   (try
@@ -71,7 +87,7 @@
       (log/info "################ Game started " event)
       (addNewGame server game) 
       (updateState ongoing-games server (getLastGame server))
-      (start_game server getGame)
+      (start_game server (getGame server))
       )))
 
 (defn round_started [event] 
@@ -96,7 +112,7 @@
   (try
     (let [line (get message :line)
           server (get message :server)]
-
+      (log/info "::: Line: " line)
       (mr/notify reactor line {:line line :server server})
 
       )
@@ -108,4 +124,6 @@
   (mr/on reactor (R ".*Restart_Round_.*") game_started )
   (mr/on reactor (R ".*SFUI_Notice.*") round_or_game_ended )
   (mr/on reactor (R ".*mp_teamname_.*") add_team )
+
+  ;; eBot triggered "Round_Spawn"
   ) 

@@ -52,10 +52,12 @@
 
 (defn addNewTeam [server team] 
   (log/info "Add new Team :" team)
-  (cql/insert connection "teams" (merge team {:id (uuids/random) :server server}))
+  (cql/insert connection "teams" team)
   )
 
 (defn updateGame [game]
+  (log/info "Game to update: " game)
+  (try 
   (let [game2upd (dissoc game :id :server :started)]
     (log/info "Game to update: " game2upd)
     (cql/update connection "games"  game2upd  (where  [[= :id  (get game :id)]
@@ -63,6 +65,7 @@
                                                        [= :started (get game :started)]
                                                        ]))
     )
+    (catch Exception e (log/error e (.getMessage e))))
   )
 
 (defn updateRound [round]
@@ -79,10 +82,14 @@
 (defn updateTeam [team]
   (log/info "Update team" team)
   (let [team2upd (dissoc team :name :game)]
-    (cql/update connection "teams" team2upd (where [[= :name (get team :name)]
-                                                    [= :game (get team :id)]] 
-                                                   )
-                )))
+    (log/info "Team to update: " team)
+    (try
+      (cql/update connection "teams" team2upd (where [[= :name (get team :name)]
+                                                      [= :game (get team :id)]] 
+                                                     )
+                  )
+      (catch Exception e (log/error e (.getMessage e))) 
+      )))
 
 (defn getAllGames []
   ;;  (order-by [:started :desc])
@@ -98,17 +105,20 @@
   (cql/insert connection "events" {:id  (uuids/random) :server server :line line :eventtime (c/to-long (t/now))}))
 
 (defn getTeam [team server game]
-  (cql/select connection "teams" (where [[= :name name][= :game (get game :id)]])
+  (cql/select connection "teams" (where [[= :name (get team :name)][= :game (get game :id)]])
   ))
 
 (defn upsertTeam [server team game]
-  (let [orgGame (getTeam team server game)]
-    (log/info "Upsert team " team " found " orgGame)
-    (if orgGame 
+  (log/info "Team to upsert: " team game)
+  (try 
+  (let [orgTeam (getTeam team server game)]
+    (log/info "Upsert team " team " found " orgTeam)
+    (if (not-empty orgTeam) 
       (updateTeam team)
-      (addNewTeam team)
+      (addNewTeam server team)
       )
     )   
+    (catch Exception e (log/error e (.getMessage e))))
   )
 
 (defn getAllTeams [gameid]
