@@ -18,8 +18,10 @@ mkdir /home/install
 # ./configure
 # make
 # make install
-# echo 'date.timezone = Europe/Helsinki' >> /usr/local/lib/php.ini
+echo 'date.timezone = Europe/Helsinki' >> /usr/local/lib/php.ini
 # echo 'extension=pthreads.so' >> /etc/php.ini
+
+apt-get install -y libapache2-mod-php5
 
 mkdir /home/ebot
 
@@ -44,7 +46,11 @@ mv eBot-CSGO-Web-master ebot-web
 cd ebot-web
 mkdir /home/ebot/ebot-web/cache
 
-cp config/app_user.yml.default config/app_user.yml
+# cp config/app_user.yml.default config/app_user.yml
+
+cp -r /home/ebot/ebot-web /var/www/html
+
+chmod -R 777 /var/www/html/ebot-web
 
 # edit config config/app_user.yml with ebot_ip and ebot_port
 # edit database config/database.yml
