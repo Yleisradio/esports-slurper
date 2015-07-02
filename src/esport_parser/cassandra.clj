@@ -35,7 +35,7 @@
                                            (order-by [:started :desc])
                                            (limit 1)))))
 
-(defn getLastRound [server gameid]
+(defn getLastRound [gameid]
   (first (filter filterStarted (cql/select connection "rounds"
                                            (where [[= :game gameid]])
                                            (order-by [:started :desc])
@@ -115,7 +115,7 @@
       (log/info "Upsert team " team " found " orgTeam)
       (if (not-empty orgTeam)
         (updateTeam team)
-        (addNewTeam server team)
+        (addNewTeam team)
         )
       )
     (catch Exception e (log/error e (.getMessage e))))

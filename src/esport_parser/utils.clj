@@ -21,6 +21,7 @@
   (case (.toUpperCase team)
     "TERRORIST" "t"
     "CT" "ct"
+    "nano"
     )
   )
 
@@ -28,6 +29,7 @@
   (case (.toLowerCase winner)
     "t" "ct"
     "ct" "t"
+    "nano"
     )
   )
 

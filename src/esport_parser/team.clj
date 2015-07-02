@@ -49,7 +49,7 @@
 
 ;; set team_1 to be ct and team 2 to be t 
 ;; insert to db current teams from this server. 
-(defn start_game [server game]
+(defn team_start_game [server game]
   (log/info "Teams:" @ongoing-teams " " server " " game)
   (log/info (get @ongoing-teams server))
   (doseq [[id team] (get @ongoing-teams server)]
