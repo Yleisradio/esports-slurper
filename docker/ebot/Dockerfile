@@ -21,10 +21,6 @@ ADD install-ebot.sh /tmp/install-ebot.sh
 RUN chmod 777 /tmp/install-ebot.sh
 RUN /tmp/install-ebot.sh
 
-ADD start-ebot.sh /tmp/start-ebot.sh
-RUN chmod 777 /tmp/start-ebot.sh
-RUN /tmp/start-ebot.sh
-
 ADD config/config.ini /home/ebot/ebot-csgo/config/config.ini
 ADD config/app_user.yml /var/www/html/ebot-web/config/app_user.yml
 ADD config/databases.yml /var/www/html/ebot-web/config/databases.yml
