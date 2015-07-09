@@ -34,14 +34,12 @@ CREATE TABLE rounds (
 CREATE TABLE round_players (
   game uuid,
   round uuid,
-  side text,
   player_name text,
-  player_side text,
-  player_id text,
   died counter,
   killed counter,
   headshot counter,
-  PRIMARY KEY (player_name,game,round,side,player_side,player_id)
+  assists counter,
+  PRIMARY KEY (player_name,game,round)
 );
 
 
@@ -56,15 +54,16 @@ CREATE TABLE weapons (
 
 CREATE TABLE players (
     name text,
-    id text,
+    server text,
     team text,
     steamid text,
-    PRIMARY KEY (name,team)
+    PRIMARY KEY (steamid,server)
 );
 
 CREATE TABLE teams (
     name text,
     label text,
+    id text,
     side text,
     game uuid,
     points int,

@@ -1,11 +1,10 @@
 (ns esport-parser.team
   (:require [clojure.tools.logging :as log]
             [clj-time.core :as t]
-            [clj-time.coerce :as c])
-  (:use esport-parser.schema)
-  (:use esport-parser.cassandra)
-  (:use esport-parser.utils)
-  (:import [java.util Date])
+            [clj-time.coerce :as c]
+            [esport-parser.cassandra :refer [upsertTeam updateTeam]]
+            [esport-parser.utils :refer :all]
+            )
   )
 
 
@@ -24,13 +23,31 @@
   )
 
 ;; get current team with side(t,ct) and game
-(defn get_team [server side game])
+(defn getTeamWithside [server side]
+  (log/info "getTeamWithside" side ":" (get @ongoing-teams server))
+  (let [teamentry (first (filter (fn [team]
+                                   (= (get (val team) :side) side)) (get @ongoing-teams server)))
+        team (when teamentry (val teamentry))]
+    team
+    ))
 
 (defn teaminitside [teamid]
   (case teamid
     "mp_teamname_1" "ct"
     "mp_teamname_2" "t"
     )
+  )
+
+(defn updateTeamSide [server team newside]
+  (log/info "updateTeamSide:" team newside)
+  (updateTeam (assoc team :side newside))
+  (updateOngoingTeam server (assoc team :side newside))
+  )
+
+(defn updateTeamPoints [server team points]
+  (log/info "updateTeamPoints:" team points)
+  (updateTeam (assoc team :points (int points)))
+  (updateOngoingTeam server (assoc team :points (int points)))
   )
 
 ;; add new current team from the log
@@ -42,7 +59,7 @@
         teamName (get tokens 3)
         team {:name teamName :id teamId :side (teaminitside teamId)}
         ]
-    (log/info "Team " teamId ":" teamName)
+    (log/info "Team " teamId ":" teamName ":" team)
     (updateOngoingTeam server team)
     )
   )
@@ -53,11 +70,12 @@
   (log/info "Teams:" @ongoing-teams " " server " " game)
   (log/info (get @ongoing-teams server))
   (doseq [[id team] (get @ongoing-teams server)]
-    (do
-      (log/info "Team to upsert" team)
-      (upsertTeam server (assoc team :game (get game :id)) game)
-      (updateOngoingTeam server (assoc team :game (get game :id)))
-      ))
+    (if (and team game)
+      (do
+        (log/info "Team to upsert" team)
+        (upsertTeam server (assoc team :game (get game :id)) game)
+        (updateOngoingTeam server (assoc team :game (get game :id)))
+        )))
   )
 
 ;; end game and clean teams.

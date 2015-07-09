@@ -18,18 +18,20 @@
 
 
 (defn teamShort [team]
-  (case (.toUpperCase team)
+  (case (if team (.toUpperCase team) nil)
     "TERRORIST" "t"
     "CT" "ct"
-    "nano"
+    "UNASSIGNED" nil
+    "T" "t"
+    nil
     )
   )
 
-(defn getLoserSide [winner]
-  (case (.toLowerCase winner)
+(defn getOtherSide [side]
+  (case (if side (.toLowerCase side) nil)
     "t" "ct"
     "ct" "t"
-    "nano"
+    nil
     )
   )
 
@@ -42,12 +44,12 @@
 
 (defn getLastAndSafe [server] (updateState ongoing-games server (getLastGame server)))
 
-(defn getLastRoundAndSafe [server gameid] (updateState ongoing-rounds server (getLastRound server gameid)))
+(defn getLastRoundAndSafe [server gameid] (updateState ongoing-rounds server (getLastRound gameid)))
 
 
 (defn getGame [server]
   (or
-    (when (contains? @ongoing-games :server) (get @ongoing-games server))
+    (when (contains? @ongoing-games :server) (get @ongoing-games server nil))
     (do
       (getLastAndSafe server)
       (get @ongoing-games server nil))
@@ -56,6 +58,10 @@
 
 
 (defn getRound [server game]
-  (or (when (not-empty @ongoing-rounds) (get @ongoing-rounds server)) ((getLastRoundAndSafe server game) ((get @ongoing-rounds server))))
-  )
-
+  (or (when (not-empty @ongoing-rounds)
+        (get @ongoing-rounds server nil))
+      (do
+        (getLastRoundAndSafe server game)
+        (get @ongoing-rounds server)
+        )
+      ))

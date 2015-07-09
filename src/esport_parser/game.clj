@@ -17,7 +17,7 @@
     ;; End game, set winner. Not handling specialcases yet.
     (log/info "Ending game: " game)
     (updateGame (merge game {:ended  (timeNow) :state "ended"
-                             :loser (getLoserSide winner)
+                             :loser  (getOtherSide winner)
                              :winner winner
                              }))
     (clearState ongoing-games server)
@@ -30,6 +30,9 @@
     (gameEnd server game points winner)
     )
   )
+
+(defn refreshGame [server]
+  (updateState ongoing-games server (getLastGame server)))
 
 (defn game_started [event]
   (let [server (getEventItem event :server)
